@@ -1,43 +1,66 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 
-export const placeOrder = async (req, res) => {
+// Create new order (User)
+export const createOrder = async (req, res) => {
   try {
-    const userId = req.userId;
-    const { items, total, paymentStatus = "Pending" } = req.body;
+    const { products } = req.body; // [{ product: id, quantity }]
+    let totalPrice = 0;
 
-    // attach vendorId for each item
-    const itemsWithVendor = await Promise.all(
-      items.map(async (i) => {
-        const product = await Product.findById(i.productId);
-        return {
-          ...i,
-          vendorId: product.vendorId,
-        };
-      })
-    );
+    for (const item of products) {
+      const product = await Product.findById(item.product);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      totalPrice += product.price * item.quantity;
+    }
 
-    const order = await Order.create({
-      userId,
-      items: itemsWithVendor,
-      total,
-      paymentStatus,
+    const order = new Order({
+      user: req.user._id,
+      products,
+      totalPrice,
+      status: "pending",
     });
 
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    await order.save();
+    res.status(201).json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
+// Get all orders for user
 export const getUserOrders = async (req, res) => {
   try {
-    const userId = req.userId;
+    const orders = await Order.find({ user: req.user._id })
+      .populate("products.product")
+      .sort({ createdAt: -1 });
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+// Get all orders (Admin)
+export const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user")
+      .populate("products.product")
+      .sort({ createdAt: -1 });
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+// Update order status (Admin)
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.status(200).json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
