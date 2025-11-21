@@ -1,10 +1,15 @@
 import express from "express";
-import { getModules, createModule, updateModule, deleteModule } from "../controllers/moduleController.js";
 import { adminAuth } from "../middleware/adminAuth.js";
+import {
+  getAllModules,
+  createModule,
+  updateModule,
+  deleteModule,
+} from "../controllers/moduleController.js";
 
 const router = express.Router();
 
-router.get("/", getModules);
+router.get("/", adminAuth, getAllModules);
 router.post("/", adminAuth, createModule);
 router.put("/:id", adminAuth, updateModule);
 router.delete("/:id", adminAuth, deleteModule);
