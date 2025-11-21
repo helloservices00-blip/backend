@@ -1,16 +1,17 @@
 import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+import Vendor from "../models/Vendor.js";
 
-export default function vendorAuth(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
-
+export const vendorAuth = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.vendorId = decoded.vendorId;
-    next();
-  } catch {
-    res.status(401).json({ message: "Invalid token" });
-  }
-}
+    const token = req.headers.authorization?.split(" ")[1];
+    if(!token) return res.status(401).json({ message: "No token provided" });
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.vendor = await Vendor.findById(decoded.id);
+    if(!req.vendor) return res.status(401).json({ message: "Invalid token" });
+
+    next();
+  } catch(err) {
+    res.status(401).json({ message: "Unauthorized", error: err.message });
+  }
+};
