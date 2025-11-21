@@ -1,45 +1,44 @@
+// controllers/moduleController.js
 import Module from "../models/Module.js";
 
-export const getModules = async (req, res) => {
+// Get all modules
+export const getAllModules = async (req, res) => {
   try {
     const modules = await Module.find();
-    res.status(200).json(modules);
+    res.json(modules);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+// Create module
 export const createModule = async (req, res) => {
   try {
     const { name, description } = req.body;
-    const existing = await Module.findOne({ name });
-    if (existing) return res.status(400).json({ message: "Module already exists" });
-
-    const module = new Module({ name, description });
-    await module.save();
+    const module = await Module.create({ name, description });
     res.status(201).json(module);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+// Update module
 export const updateModule = async (req, res) => {
   try {
     const { id } = req.params;
     const module = await Module.findByIdAndUpdate(id, req.body, { new: true });
-    if (!module) return res.status(404).json({ message: "Module not found" });
-    res.status(200).json(module);
+    res.json(module);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+// Delete module
 export const deleteModule = async (req, res) => {
   try {
-    const { id } = req.params;
-    await Module.findByIdAndDelete(id);
-    res.status(200).json({ message: "Module deleted" });
+    await Module.findByIdAndDelete(req.params.id);
+    res.json({ message: "Module deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
