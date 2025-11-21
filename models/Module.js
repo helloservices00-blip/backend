@@ -1,11 +1,8 @@
 import mongoose from "mongoose";
 
-const moduleSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true, unique: true }
-  },
-  { timestamps: true }
-);
+const ModuleSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  description: { type: String }
+}, { timestamps: true });
 
-export default mongoose.model("Module", moduleSchema);
-
+export default mongoose.model("Module", ModuleSchema);
