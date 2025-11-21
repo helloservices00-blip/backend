@@ -1,11 +1,14 @@
 import express from "express";
-import { getProducts, getProductById } from "../controllers/productController.js";
+import multer from "multer";
+import { getProducts, createProduct, updateProduct, deleteProduct } from "../controllers/productController.js";
+import { adminAuth } from "../middleware/adminAuth.js";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
-// List products with query params
 router.get("/", getProducts);
-router.get("/:id", getProductById);
+router.post("/", adminAuth, upload.array("images"), createProduct);
+router.put("/:id", adminAuth, upload.array("images"), updateProduct);
+router.delete("/:id", adminAuth, deleteProduct);
 
 export default router;
-
