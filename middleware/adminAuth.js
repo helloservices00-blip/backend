@@ -1,17 +1,17 @@
 import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+import User from "../models/User.js";
 
-// Simple admin middleware based on JWT
-export default function adminAuth(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
-
+export const adminAuth = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    // For demo, assume adminId=1 is admin
-    if (!decoded.isAdmin) return res.status(403).json({ message: "Forbidden" });
+    const token = req.headers.authorization?.split(" ")[1];
+    if(!token) return res.status(401).json({ message: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+    if(!req.user || !req.user.isAdmin) return res.status(403).json({ message: "Forbidden" });
+
     next();
-  } catch {
-    res.status(401).json({ message: "Invalid token" });
+  } catch(err) {
+    res.status(401).json({ message: "Unauthorized", error: err.message });
   }
-}
+};
