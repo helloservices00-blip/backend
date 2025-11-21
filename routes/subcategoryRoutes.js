@@ -1,33 +1,26 @@
 import express from "express";
-import SubCategory from "../models/Subcategory.js";
+import Subcategory from "../models/Subcategory.js";
 
 const router = express.Router();
 
-// CREATE SUBCATEGORY
+// Create Subcategory
 router.post("/", async (req, res) => {
   try {
-    const { name, category } = req.body;
-
-    if (!name || !category) {
-      return res.status(400).json({ message: "Name & category required" });
-    }
-
-    const sub = new SubCategory({ name, category });
+    const sub = new Subcategory(req.body);
     await sub.save();
-
-    res.json({ message: "Subcategory created", sub });
+    res.status(201).json(sub);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// GET SUBCATEGORIES BY CATEGORY
-router.get("/:categoryId", async (req, res) => {
+// Get all Subcategories
+router.get("/", async (req, res) => {
   try {
-    const subs = await SubCategory.find({ category: req.params.categoryId });
-    res.json(subs);
+    const data = await Subcategory.find();
+    res.json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
