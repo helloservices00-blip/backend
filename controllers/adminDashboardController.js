@@ -1,32 +1,32 @@
 import User from "../models/User.js";
 import Vendor from "../models/Vendor.js";
+import Product from "../models/Product.js";
 import Order from "../models/Order.js";
+import Module from "../models/Module.js";
+import Category from "../models/Category.js";
+import Subcategory from "../models/Subcategory.js";
 
-export const getUsers = async (req, res) => {
-  const users = await User.find().sort({ createdAt: -1 });
-  res.json(users);
+// Get counts and stats
+export const getDashboardStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalVendors = await Vendor.countDocuments();
+    const totalProducts = await Product.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const totalModules = await Module.countDocuments();
+    const totalCategories = await Category.countDocuments();
+    const totalSubcategories = await Subcategory.countDocuments();
+
+    res.status(200).json({
+      totalUsers,
+      totalVendors,
+      totalProducts,
+      totalOrders,
+      totalModules,
+      totalCategories,
+      totalSubcategories
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
-
-export const getVendors = async (req, res) => {
-  const vendors = await Vendor.find().sort({ createdAt: -1 });
-  res.json(vendors);
-};
-
-export const getOrders = async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
-  res.json(orders);
-};
-
-export const getAnalytics = async (req, res) => {
-  const totalUsers = await User.countDocuments();
-  const totalVendors = await Vendor.countDocuments();
-  const totalOrders = await Order.countDocuments();
-  const totalSalesAgg = await Order.aggregate([
-    { $unwind: "$items" },
-    { $group: { _id: null, totalSales: { $sum: { $multiply: ["$items.price", "$items.qty"] } } } }
-  ]);
-  const totalSales = totalSalesAgg[0]?.totalSales || 0;
-
-  res.json({ totalUsers, totalVendors, totalOrders, totalSales });
-};
-
