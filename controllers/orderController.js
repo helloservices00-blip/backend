@@ -1,22 +1,28 @@
-import { sendEmail } from "../utils/email.js";
-import Vendor from "../models/Vendor.js";
+import Order from "../models/Order.js";
+import Product from "../models/Product.js";
 
-export const createOrderFromStripe = async (req, res) => {
+export const placeOrder = async (req, res) => {
   try {
-    const { session_id } = req.body;
-    // fetch Stripe session details
-    // create Order in DB
-    const order = await Order.create({ /* ...order data */ });
+    const userId = req.userId;
+    const { items, total, paymentStatus = "Pending" } = req.body;
 
-    // Send email to user
-    await sendEmail(order.userEmail, "Order Confirmation", `<p>Your order #${order._id} has been placed!</p>`);
+    // attach vendorId for each item
+    const itemsWithVendor = await Promise.all(
+      items.map(async (i) => {
+        const product = await Product.findById(i.productId);
+        return {
+          ...i,
+          vendorId: product.vendorId,
+        };
+      })
+    );
 
-    // Notify vendors
-    const vendorIds = [...new Set(order.items.map(i => i.vendorId))];
-    const vendors = await Vendor.find({ _id: { $in: vendorIds } });
-    for (const v of vendors) {
-      await sendEmail(v.email, "New Order Received", `<p>You have a new order containing your products.</p>`);
-    }
+    const order = await Order.create({
+      userId,
+      items: itemsWithVendor,
+      total,
+      paymentStatus,
+    });
 
     res.json(order);
   } catch (error) {
@@ -24,3 +30,14 @@ export const createOrderFromStripe = async (req, res) => {
   }
 };
 
+export const getUserOrders = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
