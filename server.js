@@ -1,44 +1,45 @@
 import express from "express";
-import cors from "cors";
 import mongoose from "mongoose";
+import cors from "cors";
 import dotenv from "dotenv";
-
-import authRoutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import vendorRoutes from "./routes/vendorRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
-
-import moduleRoutes from "./routes/moduleRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js";
-import subcategoryRoutes from "./routes/subcategoryRoutes.js";
 
 dotenv.config();
 const app = express();
-
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Main Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/vendors", vendorRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
+// Import routes
+import authRoutes from "./routes/authRoutes.js";
+import vendorAuthRoutes from "./routes/vendorAuthRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import vendorProductRoutes from "./routes/vendorProductRoutes.js";
+import vendorOrderRoutes from "./routes/vendorOrderRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js";
+import moduleRoutes from "./routes/moduleRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import subcategoryRoutes from "./routes/subcategoryRoutes.js";
+import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
 
-// Module → Category → Subcategory
-app.use("/api/modules", moduleRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/subcategories", subcategoryRoutes);
+app.use("/auth", authRoutes);
+app.use("/vendor/auth", vendorAuthRoutes);
+app.use("/products", productRoutes);
+app.use("/vendor/products", vendorProductRoutes);
+app.use("/vendor/orders", vendorOrderRoutes);
+app.use("/orders", orderRoutes);
+app.use("/checkout", checkoutRoutes);
+app.use("/modules", moduleRoutes);
+app.use("/categories", categoryRoutes);
+app.use("/subcategories", subcategoryRoutes);
+app.use("/admin/dashboard", adminDashboardRoutes);
 
-// Database and server
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(process.env.PORT || 5000, () => {
-      console.log("Server running");
-    });
-  })
-  .catch((err) => console.log(err));
+// Error Handler
+import errorHandler from "./middleware/errorHandler.js";
+app.use(errorHandler);
+
+// Connect MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
+
+app.listen(process.env.PORT, () => console.log(`Server running on port ${process.env.PORT}`));
