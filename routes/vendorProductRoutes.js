@@ -1,39 +1,115 @@
 import express from "express";
 import Product from "../models/Product.js";
-import vendorAuth from "../middleware/vendorAuth.js"; // ensure this exists
+import Vendor from "../models/Vendor.js";
+import authVendorMiddleware from "../middleware/authVendorMiddleware.js";
 
 const router = express.Router();
 
-// ➤ VENDOR ADDS PRODUCT
-router.post("/add", vendorAuth, async (req, res) => {
+// ------------------------------
+// ADD PRODUCT (Vendor Only)
+// ------------------------------
+router.post("/add", authVendorMiddleware, async (req, res) => {
   try {
-    const vendorId = req.vendor._id; // from token
+    const {
+      name,
+      description,
+      price,
+      module,
+      category,
+      subcategory,
+      images,
+      stock,
+    } = req.body;
 
-    const { moduleId, categoryId, subcategoryId, name, price } = req.body;
+    // Vendor comes from token
+    const vendorId = req.vendor.id;
 
-    if (!moduleId || !categoryId || !subcategoryId)
-      return res.status(400).json({ message: "Select module/category/subcategory" });
-
-    const product = new Product({
-      ...req.body,
-      vendorId: vendorId,
+    const newProduct = new Product({
+      name,
+      description,
+      price,
+      module,
+      category,
+      subcategory,
+      images,
+      vendorId,
+      stock,
     });
 
-    await product.save();
+    await newProduct.save();
 
-    res.json({ message: "Product added", product });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(201).json({
+      message: "Product created successfully",
+      product: newProduct,
+    });
+  } catch (error) {
+    console.error("Error adding product:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-// ➤ VENDOR GET OWN PRODUCTS
-router.get("/my-products", vendorAuth, async (req, res) => {
+// ------------------------------
+// GET ALL PRODUCTS FOR LOGGED-IN VENDOR
+// ------------------------------
+router.get("/my-products", authVendorMiddleware, async (req, res) => {
   try {
-    const products = await Product.find({ vendorId: req.vendor._id });
+    const vendorId = req.vendor.id;
+
+    const products = await Product.find({ vendorId });
+
     res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error("Error fetching vendor products:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// ------------------------------
+// UPDATE PRODUCT (Vendor Only)
+// ------------------------------
+router.put("/update/:id", authVendorMiddleware, async (req, res) => {
+  try {
+    const vendorId = req.vendor.id;
+
+    const product = await Product.findOne({
+      _id: req.params.id,
+      vendorId,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    Object.assign(product, req.body);
+    await product.save();
+
+    res.json({ message: "Product updated", product });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// ------------------------------
+// DELETE PRODUCT (Vendor Only)
+// ------------------------------
+router.delete("/delete/:id", authVendorMiddleware, async (req, res) => {
+  try {
+    const vendorId = req.vendor.id;
+
+    const product = await Product.findOneAndDelete({
+      _id: req.params.id,
+      vendorId,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json({ message: "Product deleted" });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
