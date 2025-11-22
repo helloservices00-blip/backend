@@ -14,6 +14,7 @@ import moduleRoutes from "./routes/moduleRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subcategoryRoutes.js";
 import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
+import productTreeRoutes from "./routes/productTreeRoutes.js"
 
 dotenv.config();
 const app = express();
@@ -33,6 +34,7 @@ app.use("/api/modules", moduleRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/subcategories", subcategoryRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api/products-tree", productTreeRoutes);
 
 const PORT = process.env.PORT || 5000;
 
